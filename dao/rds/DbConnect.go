@@ -20,14 +20,10 @@ func ChangeDb(dbName string) (bool, error) {
 
 func ConnectRDS() error {
 	var err error = nil
-	defer func() {
-		if err := recover(); err != nil {
-			log.Printf("Runtime panic caught: %v\n", err)
-		}
-	}()
 	global.RdsDb, err = gorm.Open(mysql.Open(global.RDS_DSN), &gorm.Config{})
 	if err != nil {
-		panic(err)
+		log.Println("RDS Init Fail")
+		return err
 	}
 	return err
 }

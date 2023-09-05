@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	InitResult  = false
-	Neo4jDriver neo4j.Driver
-	RdsDb       *gorm.DB
+	InitResult               = false
+	Neo4jDriver neo4j.Driver = nil
+	RdsDb       *gorm.DB     = nil
 )

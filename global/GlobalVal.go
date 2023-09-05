@@ -3,7 +3,7 @@ package global
 var (
 	//for neo4j
 	Neo4jUri      = "bolt://localhost:7687"
-	Neo4jUsername = "graph"
+	Neo4jUsername = "neo4j"
 	Neo4jPassword = "zsm20020609"
 
 	//for RDS
