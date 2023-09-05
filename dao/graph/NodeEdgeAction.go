@@ -35,7 +35,7 @@ func AddNode(label string, properties []string, isUnique bool) (neo4j.Result, er
 func Run(cypher string) (neo4j.Result, error) {
 	session, err := global.Neo4jDriver.NewSession(neo4j.SessionConfig{})
 	if err != nil {
-		log.Fatalf("Failed to create Neo4j session: %v", err)
+		log.Printf("Failed to create Neo4j session: %v\n", err)
 	}
 	// 释放session
 	defer session.Close()
@@ -48,21 +48,21 @@ func Run(cypher string) (neo4j.Result, error) {
 func Exec(cypher string) (neo4j.Result, error) {
 	session, err := global.Neo4jDriver.NewSession(neo4j.SessionConfig{})
 	if err != nil {
-		log.Fatalf("Failed to create Neo4j session: %v", err)
+		log.Printf("Failed to create Neo4j session: %v\n", err)
 	}
 	// 释放session
 	defer session.Close()
 	tx, err := session.BeginTransaction()
 	if err != nil {
-		log.Fatalf("Failed to begin transaction: %v", err)
+		log.Printf("Failed to begin transaction: %v\n", err)
 	}
 	result, err := tx.Run(cypher, nil)
 	if err != nil {
-		log.Fatalf("Failed to run query: %v", err)
+		log.Printf("Failed to run query: %v\n", err)
 	}
 	//提交事务
 	if err := tx.Commit(); err != nil {
-		log.Fatalf("Failed to commit transaction: %v", err)
+		log.Printf("Failed to commit transaction: %v\n", err)
 	}
 	return result, err
 }
