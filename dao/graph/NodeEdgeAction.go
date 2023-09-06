@@ -7,25 +7,25 @@ import (
 	"strings"
 )
 
-func AddNode(label string, properties []string, isUnique bool) (neo4j.Result, error) {
-	var cypther strings.Builder
-	cypther.WriteString("create (node:")
-	cypther.WriteString(label)
+func CreateNode(label string, properties map[string]string, isUnique bool) (neo4j.Result, error) {
+	var cypher strings.Builder
+	cypher.WriteString("create (node:")
+	cypher.WriteString(label)
 	if len(properties) != 0 {
-		cypther.WriteString("{")
-		for _, property := range properties {
-			cypther.WriteString(property)
-			cypther.WriteString(":true,")
+		cypher.WriteString("{")
+		for k, property := range properties {
+			cypher.WriteString(k)
+			cypher.WriteString(":" + property + ",")
 		}
 		if isUnique {
-			cypther.WriteString("unique:true")
+			cypher.WriteString("unique:true")
 		} else {
-			cypther.WriteString("unique:false")
+			cypher.WriteString("unique:false")
 		}
-		cypther.WriteString("}")
+		cypher.WriteString("}")
 	}
-	cypther.WriteString(")")
-	result, err := Run(cypther.String())
+	cypher.WriteString(")")
+	result, err := Run(cypher.String())
 	if err != nil {
 		return result, err
 	}
