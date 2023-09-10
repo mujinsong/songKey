@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func CreateNode(label string, properties map[string]string, isUnique bool) (neo4j.Result, error) {
+func CreateNode(label string, properties map[string]string, isUnique bool) (*neo4j.Result, error) {
 	var cypher strings.Builder
 	cypher.WriteString("create (node:")
 	cypher.WriteString(label)
@@ -32,7 +32,7 @@ func CreateNode(label string, properties map[string]string, isUnique bool) (neo4
 	return result, err
 }
 
-func Run(cypher string) (neo4j.Result, error) {
+func Run(cypher string) (*neo4j.Result, error) {
 	session, err := global.Neo4jDriver.NewSession(neo4j.SessionConfig{})
 	if err != nil {
 		log.Printf("Failed to create Neo4j session: %v\n", err)
@@ -43,7 +43,7 @@ func Run(cypher string) (neo4j.Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	return result, err
+	return &result, err
 }
 func Exec(cypher string) (neo4j.Result, error) {
 	session, err := global.Neo4jDriver.NewSession(neo4j.SessionConfig{})

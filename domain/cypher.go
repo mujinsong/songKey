@@ -6,6 +6,7 @@ import (
 	"log"
 	"reflect"
 	"songKey/contants"
+	"songKey/dao/graph"
 	"songKey/utils"
 	"strings"
 	"sync"
@@ -13,9 +14,12 @@ import (
 
 type CypherStruct struct {
 	MatchCypher   strings.Builder
-	MatchCount    int
-	RelationCount int
-	matchLock     sync.Locker
+	matchCount    int
+	relationCount int
+	matchLock     sync.Mutex
+
+	ReturnCypher strings.Builder
+	IsReturn     bool
 }
 
 func (cypher *CypherStruct) MatchNode(node *Node) *CypherStruct {
@@ -37,13 +41,13 @@ func (cypher *CypherStruct) MatchNodeByLabelStr(label string) bool {
 	}()
 	if !utils.IsEmpty(label) {
 		cypher.matchLock.Lock()
-		if cypher.MatchCount != 0 {
+		if cypher.matchCount != 0 {
 			cypher.MatchCypher.WriteByte(',')
 		} else {
 			cypher.MatchCypher.WriteString("match ")
 		}
-		cypher.MatchCypher.WriteString(fmt.Sprintf("(n%d:%s)", cypher.MatchCount, label))
-		cypher.MatchCount++
+		cypher.MatchCypher.WriteString(fmt.Sprintf("(n%d:%s)", cypher.matchCount, label))
+		cypher.matchCount++
 		cypher.matchLock.Unlock()
 		return true
 	} else {
@@ -55,11 +59,11 @@ func (cypher *CypherStruct) MatchNodeByLabelStr(label string) bool {
 func (cypher *CypherStruct) concatRelationMatcher(relation *RelationMatcher) {
 	cypher.MatchNode(relation.FromNode)
 	cypher.MatchCypher.WriteByte('-')
-	cypher.MatchCypher.WriteString(fmt.Sprintf("[r%d:%s]", cypher.MatchCount, relation.Label))
-	cypher.RelationCount++
+	cypher.MatchCypher.WriteString(fmt.Sprintf("[r%d:%s]", cypher.matchCount, relation.Label))
+	cypher.relationCount++
 	cypher.MatchCypher.WriteString("->")
-	cypher.MatchCypher.WriteString(fmt.Sprintf("(n%d:%s)", cypher.MatchCount, relation.ToNode.Label))
-	cypher.MatchCount++
+	cypher.MatchCypher.WriteString(fmt.Sprintf("(n%d:%s)", cypher.matchCount, relation.ToNode.Label))
+	cypher.matchCount++
 
 }
 func (cypher *CypherStruct) concatRelationQuery(relation *RelationQuery) {
@@ -78,11 +82,10 @@ func (cypher *CypherStruct) concatRelationQuery(relation *RelationQuery) {
 		}
 		cypher.MatchCypher.WriteString("]->")
 	}
-	cypher.MatchCypher.WriteString(fmt.Sprintf("(n%d:%s)", cypher.MatchCount, relation.ToNode.Label))
-	cypher.MatchCount++
+	cypher.MatchCypher.WriteString(fmt.Sprintf("(n%d:%s)", cypher.matchCount, relation.ToNode.Label))
+	cypher.matchCount++
 }
 
-// MatchRelation todo
 func (cypher *CypherStruct) MatchRelation(relation interface{}) *CypherStruct {
 	theType := reflect.TypeOf(relation)
 	if theType.String() == contants.RELATION_MATCHER_NAME {
@@ -97,7 +100,44 @@ func (cypher *CypherStruct) MatchRelation(relation interface{}) *CypherStruct {
 	return cypher
 }
 
-// Return todo
-func (cypher *CypherStruct) Return() *neo4j.Result {
-	return nil
+func (cypher *CypherStruct) ReturnNode() *CypherStruct {
+	if !cypher.IsReturn {
+		cypher.ReturnCypher.WriteString(" return ")
+		cypher.IsReturn = true
+	}
+
+	for i := 0; i < cypher.matchCount; i++ {
+		cypher.ReturnCypher.WriteString(fmt.Sprintf("n%d", i))
+		if i+1 < cypher.matchCount {
+			cypher.ReturnCypher.WriteByte(',')
+		}
+	}
+	return cypher
+}
+func (cypher *CypherStruct) ReturnRelation() *CypherStruct {
+	if !cypher.IsReturn {
+		cypher.ReturnCypher.WriteString(" return ")
+		cypher.IsReturn = true
+	}
+	for i := 0; i < cypher.relationCount; i++ {
+		cypher.ReturnCypher.WriteString(fmt.Sprintf("r%d", i))
+		if i+1 < cypher.relationCount {
+			cypher.ReturnCypher.WriteByte(',')
+		}
+	}
+	return cypher
+}
+
+func (cypher *CypherStruct) GetFinalCypher() string {
+	return cypher.MatchCypher.String() + " " + cypher.ReturnCypher.String()
+}
+
+func (cypher *CypherStruct) Result() (*neo4j.Result, error) {
+	finalCypher := cypher.GetFinalCypher()
+	res, err := graph.Run(finalCypher)
+	if err != nil {
+		log.Println("error getResult")
+		return nil, err
+	}
+	return res, err
 }

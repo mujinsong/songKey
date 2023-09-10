@@ -13,7 +13,7 @@ type Node struct {
 	Properties map[string]string
 }
 
-func (node *Node) Create() (neo4j.Result, error) {
+func (node *Node) Create() (*neo4j.Result, error) {
 	return graph.CreateNode(node.Label, node.Properties, node.IsUnique)
 }
 
