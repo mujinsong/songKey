@@ -7,17 +7,32 @@ import (
 
 // Node It is mandatory to have only one label for each point
 type Node struct {
-	isUnique   bool
-	label      string
-	properties map[string]string
+	Id         int64
+	IsUnique   bool
+	Label      string
+	Properties map[string]string
 }
 
-func (node Node) Create() (neo4j.Result, error) {
-	return graph.CreateNode(node.label, node.properties, node.isUnique)
+func (node *Node) Create() (neo4j.Result, error) {
+	return graph.CreateNode(node.Label, node.Properties, node.IsUnique)
 }
 
-type Relation struct {
+type RelationMatcher struct {
+	FromNode       *Node
+	ToNode         *Node
+	Id             int64
 	ToNodeIsUnique bool
-	label          string
-	properties     map[string]string
+	Label          string
+	Properties     map[string]string
+}
+type RelationQuery struct {
+	FromNode       *Node
+	ToNode         *Node
+	Id             int64
+	ToNodeIsUnique bool
+	Label          string
+	Properties     map[string]string
+	IsDirect       bool
+	Min            int
+	Max            int
 }
