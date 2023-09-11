@@ -5,7 +5,6 @@ import (
 	"github.com/neo4j/neo4j-go-driver/neo4j"
 	"log"
 	"reflect"
-	"songKey/contants"
 	"songKey/dao/graph"
 	"songKey/utils"
 	"strings"
@@ -18,8 +17,72 @@ type CypherStruct struct {
 	relationCount int
 	matchLock     sync.Mutex
 
-	ReturnCypher strings.Builder
-	IsReturn     bool
+	WhereCypher     strings.Builder
+	needConjunction bool
+	ReturnCypher    strings.Builder
+}
+
+func (cypher *CypherStruct) Reset() {
+	cypher.MatchCypher.Reset()
+	cypher.matchCount = 0
+	cypher.relationCount = 0
+	cypher.ReturnCypher.Reset()
+}
+
+// Where :if you use this function please write "where" by yourself
+func (cypher *CypherStruct) Where(cy string) {
+	cypher.WhereCypher.WriteString(cy)
+}
+func (cypher *CypherStruct) tryAddConjunction(conjunction string) {
+	if cypher.needConjunction {
+		cypher.WhereCypher.WriteString(conjunction)
+	}
+}
+
+// todo
+func (cypher *CypherStruct) whereRelation(name string, relation *Relation, conjunction string) {
+
+}
+
+// todo
+func (cypher *CypherStruct) whereNode(name string, node *Node, conjunction string) {
+	if len(node.Label) > 0 {
+		cypher.tryAddConjunction(conjunction)
+		cypher.WhereCypher.WriteString(fmt.Sprintf(" labels(%s) =[\"%s\"]", name, node.Label))
+		cypher.needConjunction = true
+	}
+	if node.IsUnique {
+		cypher.tryAddConjunction(conjunction)
+		cypher.WhereCypher.WriteString(fmt.Sprintf(" %s.unique = \"true\"", name))
+		cypher.needConjunction = true
+	}
+	if node.Id != -1 {
+		cypher.tryAddConjunction(conjunction)
+
+		cypher.needConjunction = true
+	}
+	if len(node.Properties) > 0 {
+		cypher.tryAddConjunction(conjunction)
+
+		cypher.needConjunction = true
+	}
+
+}
+
+// WhereAnd :the name is the param of match, like n1,n2(is node),r1,r2(is relationship)
+func (cypher *CypherStruct) WhereAnd(name string, where interface{}) {
+	if cypher.WhereCypher.Len() == 0 {
+		cypher.WhereCypher.WriteString(" where ")
+	}
+	theType := reflect.TypeOf(where)
+	switch theType {
+	case reflect.TypeOf(&Relation{}):
+		cypher.whereRelation(name, where.(*Relation), " and ")
+	case reflect.TypeOf(&Node{}):
+		cypher.whereNode(name, where.(*Node), " and ")
+	default:
+		log.Println("unKnow Type")
+	}
 }
 
 func (cypher *CypherStruct) MatchNode(node *Node) *CypherStruct {
@@ -56,7 +119,7 @@ func (cypher *CypherStruct) MatchNodeByLabelStr(label string) bool {
 	}
 }
 
-func (cypher *CypherStruct) concatRelationMatcher(relation *RelationMatcher) {
+func (cypher *CypherStruct) concatRelationMatcher(relation *Relation) {
 	cypher.MatchNode(relation.FromNode)
 	cypher.MatchCypher.WriteByte('-')
 	cypher.MatchCypher.WriteString(fmt.Sprintf("[r%d:%s]", cypher.matchCount, relation.Label))
@@ -88,22 +151,22 @@ func (cypher *CypherStruct) concatRelationQuery(relation *RelationQuery) {
 
 func (cypher *CypherStruct) MatchRelation(relation interface{}) *CypherStruct {
 	theType := reflect.TypeOf(relation)
-	if theType.String() == contants.RELATION_MATCHER_NAME {
+	switch theType {
+	case reflect.TypeOf(&Relation{}):
 		log.Println("isMatcher")
-		cypher.concatRelationMatcher(relation.(*RelationMatcher))
-	} else if theType.String() == contants.RELATION_QUERY_NAME {
+		cypher.concatRelationMatcher(relation.(*Relation))
+	case reflect.TypeOf(&RelationQuery{}):
 		log.Println("isQuery")
 		cypher.concatRelationQuery(relation.(*RelationQuery))
-	} else {
+	default:
 		log.Println("unKnow Type")
 	}
 	return cypher
 }
 
 func (cypher *CypherStruct) ReturnNode() *CypherStruct {
-	if !cypher.IsReturn {
+	if cypher.ReturnCypher.Len() == 0 {
 		cypher.ReturnCypher.WriteString(" return ")
-		cypher.IsReturn = true
 	}
 
 	for i := 0; i < cypher.matchCount; i++ {
@@ -115,9 +178,8 @@ func (cypher *CypherStruct) ReturnNode() *CypherStruct {
 	return cypher
 }
 func (cypher *CypherStruct) ReturnRelation() *CypherStruct {
-	if !cypher.IsReturn {
+	if cypher.ReturnCypher.Len() == 0 {
 		cypher.ReturnCypher.WriteString(" return ")
-		cypher.IsReturn = true
 	}
 	for i := 0; i < cypher.relationCount; i++ {
 		cypher.ReturnCypher.WriteString(fmt.Sprintf("r%d", i))
