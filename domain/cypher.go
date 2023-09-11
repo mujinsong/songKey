@@ -44,8 +44,7 @@ func (cypher *CypherStruct) whereRelation(name string, relation *Relation, conju
 
 }
 
-// todo
-func (cypher *CypherStruct) whereNode(name string, node *Node, conjunction string) {
+func (cypher *CypherStruct) whereNode(name string, node *Node, conjunction string) *CypherStruct {
 	if len(node.Label) > 0 {
 		cypher.tryAddConjunction(conjunction)
 		cypher.WhereCypher.WriteString(fmt.Sprintf(" labels(%s) =[\"%s\"]", name, node.Label))
@@ -58,31 +57,46 @@ func (cypher *CypherStruct) whereNode(name string, node *Node, conjunction strin
 	}
 	if node.Id != -1 {
 		cypher.tryAddConjunction(conjunction)
-
+		cypher.WhereCypher.WriteString(fmt.Sprintf(" id(%s) =%d", name, node.Id))
 		cypher.needConjunction = true
 	}
 	if len(node.Properties) > 0 {
-		cypher.tryAddConjunction(conjunction)
-
-		cypher.needConjunction = true
+		for k, v := range node.Properties {
+			cypher.tryAddConjunction(conjunction)
+			cypher.WhereCypher.WriteString(fmt.Sprintf(" %s.%s = \"%s\"", name, k, v))
+			cypher.needConjunction = true
+		}
 	}
-
+	return cypher
 }
 
 // WhereAnd :the name is the param of match, like n1,n2(is node),r1,r2(is relationship)
-func (cypher *CypherStruct) WhereAnd(name string, where interface{}) {
+func (cypher *CypherStruct) WhereAnd(name string, where interface{}) *CypherStruct {
 	if cypher.WhereCypher.Len() == 0 {
 		cypher.WhereCypher.WriteString(" where ")
 	}
+	conjunction := " and "
 	theType := reflect.TypeOf(where)
 	switch theType {
 	case reflect.TypeOf(&Relation{}):
-		cypher.whereRelation(name, where.(*Relation), " and ")
+		cypher.whereRelation(name, (where).(*Relation), conjunction)
+		log.Println("whereAndRelation")
+	case reflect.TypeOf(Relation{}):
+		relation := (where).(Relation)
+		cypher.whereRelation(name, &relation, conjunction)
+		log.Println("whereAndRelation")
 	case reflect.TypeOf(&Node{}):
-		cypher.whereNode(name, where.(*Node), " and ")
+		cypher.whereNode(name, (where).(*Node), conjunction)
+		log.Println("whereAndNode")
+	case reflect.TypeOf(Node{}):
+		node := where.(Node)
+		cypher.whereNode(name, &node, conjunction)
+		log.Println("whereAndNode")
+
 	default:
-		log.Println("unKnow Type")
+		log.Println("whereAnd: unKnow Type")
 	}
+	return cypher
 }
 
 func (cypher *CypherStruct) MatchNode(node *Node) *CypherStruct {
@@ -191,7 +205,7 @@ func (cypher *CypherStruct) ReturnRelation() *CypherStruct {
 }
 
 func (cypher *CypherStruct) GetFinalCypher() string {
-	return cypher.MatchCypher.String() + " " + cypher.ReturnCypher.String()
+	return cypher.MatchCypher.String() + " " + cypher.WhereCypher.String() + " " + cypher.ReturnCypher.String()
 }
 
 func (cypher *CypherStruct) Result() (*neo4j.Result, error) {
