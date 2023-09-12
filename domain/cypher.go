@@ -164,8 +164,13 @@ func (cypher *CypherStruct) MatchNodeByLabelStr(label string) bool {
 func (cypher *CypherStruct) concatRelationMatcher(relation *Relation) {
 	cypher.MatchNode(relation.FromNode)
 	cypher.MatchCypher.WriteByte('-')
-	cypher.MatchCypher.WriteString(fmt.Sprintf("[r%d:%s]", cypher.relationCount, relation.Type))
-	cypher.relationCount++
+	if relation.Type != "" {
+		cypher.MatchCypher.WriteString(fmt.Sprintf("[r%d:%s]", cypher.relationCount, relation.Type))
+		cypher.relationCount++
+	} else {
+		cypher.MatchCypher.WriteString(fmt.Sprintf("[r%d]", cypher.relationCount))
+		cypher.relationCount++
+	}
 	cypher.MatchCypher.WriteString("->")
 	if relation.ToNode != nil && !utils.IsEmpty(relation.ToNode.Label) {
 		cypher.MatchCypher.WriteString(fmt.Sprintf("(n%d:%s)", cypher.matchCount, relation.ToNode.Label))
