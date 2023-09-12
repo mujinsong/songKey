@@ -127,7 +127,13 @@ func (cypher *CypherStruct) MatchNode(node *Node) *CypherStruct {
 		isOk = cypher.MatchNodeByLabelStr(node.Label)
 	}
 	if !isOk {
-		log.Println("Match Fail!")
+		log.Println("No match Node!")
+		if cypher.MatchCypher.Len() > 0 {
+			cypher.MatchCypher.WriteByte(',')
+		} else {
+			cypher.MatchCypher.WriteString("match ")
+		}
+		cypher.MatchCypher.WriteString("()")
 	}
 	return cypher
 }
@@ -161,8 +167,12 @@ func (cypher *CypherStruct) concatRelationMatcher(relation *Relation) {
 	cypher.MatchCypher.WriteString(fmt.Sprintf("[r%d:%s]", cypher.relationCount, relation.Type))
 	cypher.relationCount++
 	cypher.MatchCypher.WriteString("->")
-	cypher.MatchCypher.WriteString(fmt.Sprintf("(n%d:%s)", cypher.matchCount, relation.ToNode.Label))
-	cypher.matchCount++
+	if relation.ToNode != nil && !utils.IsEmpty(relation.ToNode.Label) {
+		cypher.MatchCypher.WriteString(fmt.Sprintf("(n%d:%s)", cypher.matchCount, relation.ToNode.Label))
+		cypher.matchCount++
+	} else {
+		cypher.MatchCypher.WriteString("()")
+	}
 
 }
 func (cypher *CypherStruct) concatRelationQuery(relation *RelationQuery) {
@@ -209,6 +219,9 @@ func (cypher *CypherStruct) MatchRelation(relation interface{}) *CypherStruct {
 }
 
 func (cypher *CypherStruct) ReturnNode() *CypherStruct {
+	if cypher.matchCount <= 0 {
+		return cypher
+	}
 	if cypher.ReturnCypher.Len() == 0 {
 		cypher.ReturnCypher.WriteString(" return ")
 	} else {
@@ -224,6 +237,9 @@ func (cypher *CypherStruct) ReturnNode() *CypherStruct {
 	return cypher
 }
 func (cypher *CypherStruct) ReturnRelation() *CypherStruct {
+	if cypher.relationCount <= 0 {
+		return cypher
+	}
 	if cypher.ReturnCypher.Len() == 0 {
 		cypher.ReturnCypher.WriteString(" return ")
 	} else {
