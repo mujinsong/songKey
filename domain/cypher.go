@@ -36,12 +36,37 @@ func (cypher *CypherStruct) Where(cy string) {
 func (cypher *CypherStruct) tryAddConjunction(conjunction string) {
 	if cypher.needConjunction {
 		cypher.WhereCypher.WriteString(conjunction)
+	} else {
+		if cypher.WhereCypher.Len() == 0 {
+			cypher.WhereCypher.WriteString(" where ")
+		}
 	}
 }
 
-// todo
-func (cypher *CypherStruct) whereRelation(name string, relation *Relation, conjunction string) {
-
+func (cypher *CypherStruct) whereRelation(name string, relation *Relation, conjunction string) *CypherStruct {
+	if len(relation.Type) > 0 {
+		cypher.tryAddConjunction(conjunction)
+		cypher.WhereCypher.WriteString(fmt.Sprintf(" type(%s) =\"%s\"", name, relation.Type))
+		cypher.needConjunction = true
+	}
+	if relation.ToNodeIsUnique {
+		cypher.tryAddConjunction(conjunction)
+		cypher.WhereCypher.WriteString(fmt.Sprintf(" %s.unique = \"true\"", name))
+		cypher.needConjunction = true
+	}
+	if relation.Id != -1 {
+		cypher.tryAddConjunction(conjunction)
+		cypher.WhereCypher.WriteString(fmt.Sprintf(" id(%s) =%d", name, relation.Id))
+		cypher.needConjunction = true
+	}
+	if len(relation.Properties) > 0 {
+		for k, v := range relation.Properties {
+			cypher.tryAddConjunction(conjunction)
+			cypher.WhereCypher.WriteString(fmt.Sprintf(" %s.%s = \"%s\"", name, k, v))
+			cypher.needConjunction = true
+		}
+	}
+	return cypher
 }
 
 func (cypher *CypherStruct) whereNode(name string, node *Node, conjunction string) *CypherStruct {
@@ -72,9 +97,6 @@ func (cypher *CypherStruct) whereNode(name string, node *Node, conjunction strin
 
 // WhereAnd :the name is the param of match, like n1,n2(is node),r1,r2(is relationship)
 func (cypher *CypherStruct) WhereAnd(name string, where interface{}) *CypherStruct {
-	if cypher.WhereCypher.Len() == 0 {
-		cypher.WhereCypher.WriteString(" where ")
-	}
 	conjunction := " and "
 	theType := reflect.TypeOf(where)
 	switch theType {
@@ -136,7 +158,7 @@ func (cypher *CypherStruct) MatchNodeByLabelStr(label string) bool {
 func (cypher *CypherStruct) concatRelationMatcher(relation *Relation) {
 	cypher.MatchNode(relation.FromNode)
 	cypher.MatchCypher.WriteByte('-')
-	cypher.MatchCypher.WriteString(fmt.Sprintf("[r%d:%s]", cypher.matchCount, relation.Label))
+	cypher.MatchCypher.WriteString(fmt.Sprintf("[r%d:%s]", cypher.relationCount, relation.Type))
 	cypher.relationCount++
 	cypher.MatchCypher.WriteString("->")
 	cypher.MatchCypher.WriteString(fmt.Sprintf("(n%d:%s)", cypher.matchCount, relation.ToNode.Label))
@@ -169,11 +191,19 @@ func (cypher *CypherStruct) MatchRelation(relation interface{}) *CypherStruct {
 	case reflect.TypeOf(&Relation{}):
 		log.Println("isMatcher")
 		cypher.concatRelationMatcher(relation.(*Relation))
+	case reflect.TypeOf(Relation{}):
+		log.Println("isMatcher")
+		temp := relation.(Relation)
+		cypher.concatRelationMatcher(&temp)
 	case reflect.TypeOf(&RelationQuery{}):
 		log.Println("isQuery")
 		cypher.concatRelationQuery(relation.(*RelationQuery))
+	case reflect.TypeOf(RelationQuery{}):
+		log.Println("isQuery")
+		temp := relation.(RelationQuery)
+		cypher.concatRelationQuery(&temp)
 	default:
-		log.Println("unKnow Type")
+		log.Println("MatchRelation: unKnow Type")
 	}
 	return cypher
 }
@@ -181,6 +211,8 @@ func (cypher *CypherStruct) MatchRelation(relation interface{}) *CypherStruct {
 func (cypher *CypherStruct) ReturnNode() *CypherStruct {
 	if cypher.ReturnCypher.Len() == 0 {
 		cypher.ReturnCypher.WriteString(" return ")
+	} else {
+		cypher.ReturnCypher.WriteByte(',')
 	}
 
 	for i := 0; i < cypher.matchCount; i++ {
@@ -194,6 +226,8 @@ func (cypher *CypherStruct) ReturnNode() *CypherStruct {
 func (cypher *CypherStruct) ReturnRelation() *CypherStruct {
 	if cypher.ReturnCypher.Len() == 0 {
 		cypher.ReturnCypher.WriteString(" return ")
+	} else {
+		cypher.ReturnCypher.WriteByte(',')
 	}
 	for i := 0; i < cypher.relationCount; i++ {
 		cypher.ReturnCypher.WriteString(fmt.Sprintf("r%d", i))

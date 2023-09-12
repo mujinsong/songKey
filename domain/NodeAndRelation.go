@@ -8,11 +8,14 @@ import (
 // Node It is mandatory to have only one label for each point
 type Node struct {
 	Id         int64 `default:"-1"`
-	IsUnique   bool  `default:"false"`
+	IsUnique   bool
 	Label      string
 	Properties map[string]string
 }
 
+func NewNode() *Node {
+	return &Node{Id: -1}
+}
 func (node *Node) Create() (*neo4j.Result, error) {
 	return graph.CreateNode(node.Label, node.Properties, node.IsUnique)
 }
@@ -27,7 +30,7 @@ type Relation struct {
 	ToNode         *Node
 	Id             int64 `default:"-1"`
 	ToNodeIsUnique bool
-	Label          string
+	Type           string
 	Properties     map[string]string
 }
 type RelationQuery struct {
@@ -35,6 +38,13 @@ type RelationQuery struct {
 	IsDirect bool
 	Min      int
 	Max      int
+}
+
+func NewRelation() *Relation {
+	return &Relation{Id: -1}
+}
+func NewRelationQuery() *RelationQuery {
+	return &RelationQuery{Relation: *NewRelation()}
 }
 
 // Create todo
