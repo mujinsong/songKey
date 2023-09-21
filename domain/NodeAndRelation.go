@@ -14,7 +14,7 @@ type Node struct {
 }
 
 func NewNode() *Node {
-	return &Node{Id: -1}
+	return &Node{Id: -1, Properties: make(map[string]string)}
 }
 func (node *Node) Create() (*neo4j.Result, error) {
 	return graph.CreateNode(node.Label, node.Properties, node.IsUnique)

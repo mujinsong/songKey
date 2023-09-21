@@ -33,18 +33,64 @@ func (cypher *CypherStruct) Reset() {
 	cypher.WhereCypher.Reset()
 	cypher.ReturnCypher.Reset()
 }
+func (cypher *CypherStruct) SetNode(name string, node *Node) *CypherStruct {
+	conjunction := ","
+	if node.IsUnique {
+		cypher.tryAddSetConjunction(conjunction)
+		cypher.SetCypher.WriteString(fmt.Sprintf(" %s.unique=true ", name))
+	}
+	if len(node.Properties) > 0 {
+		for pro, val := range node.Properties {
+			cypher.tryAddSetConjunction(conjunction)
+			cypher.SetCypher.WriteString(fmt.Sprintf(" %s.%s=%v ", name, pro, val))
+		}
+	}
+	return cypher
+}
+func (cypher *CypherStruct) SetRelation(name string, relation *Relation) *CypherStruct {
+	conjunction := ","
+	if relation.ToNode.IsUnique || relation.ToNodeIsUnique {
+		cypher.tryAddSetConjunction(conjunction)
+		cypher.SetCypher.WriteString(fmt.Sprintf(" %s.unique=true ", name))
+	}
+	if len(relation.Properties) > 0 {
+		for pro, val := range relation.Properties {
+			cypher.tryAddSetConjunction(conjunction)
+			cypher.SetCypher.WriteString(fmt.Sprintf(" %s.%s=%v ", name, pro, val))
+		}
+	}
+	return cypher
+}
 
-// todo
 // Set the `set` is a node or a relation, the `name` is the param of match, like n1,n2(is node),r1,r2(is relationship)
-func (cypher *CypherStruct) Set(name string, set interface{}) {
-
+func (cypher *CypherStruct) Set(name string, set interface{}) *CypherStruct {
+	theType := reflect.TypeOf(set)
+	switch theType {
+	case reflect.TypeOf(&Relation{}):
+		cypher.SetRelation(name, (set).(*Relation))
+		log.Println("SetRelation")
+	case reflect.TypeOf(Relation{}):
+		relation := (set).(Relation)
+		cypher.SetRelation(name, &relation)
+		log.Println("SetRelation")
+	case reflect.TypeOf(&Node{}):
+		cypher.SetNode(name, (set).(*Node))
+		log.Println("SetNode")
+	case reflect.TypeOf(Node{}):
+		node := set.(Node)
+		cypher.SetNode(name, &node)
+		log.Println("SetNode")
+	default:
+		log.Println("Set: unKnow Type")
+	}
+	return cypher
 }
 
 // Where :if you use this function please write "where" by yourself
 func (cypher *CypherStruct) Where(cy string) {
 	cypher.WhereCypher.WriteString(cy)
 }
-func (cypher *CypherStruct) tryAddConjunction(conjunction string) {
+func (cypher *CypherStruct) tryAddWhereConjunction(conjunction string) {
 	if cypher.needConjunction {
 		cypher.WhereCypher.WriteString(conjunction)
 	} else {
@@ -53,27 +99,36 @@ func (cypher *CypherStruct) tryAddConjunction(conjunction string) {
 		}
 	}
 }
+func (cypher *CypherStruct) tryAddSetConjunction(conjunction string) {
+	if cypher.needConjunction {
+		cypher.SetCypher.WriteString(conjunction)
+	} else {
+		if cypher.SetCypher.Len() == 0 {
+			cypher.SetCypher.WriteString(" set ")
+		}
+	}
+}
 
 // WhereRelation the name is the param of match, like n1,n2(is node),r1,r2(is relationship)
 func (cypher *CypherStruct) WhereRelation(name string, relation *Relation, conjunction string) *CypherStruct {
 	if len(relation.Type) > 0 {
-		cypher.tryAddConjunction(conjunction)
+		cypher.tryAddWhereConjunction(conjunction)
 		cypher.WhereCypher.WriteString(fmt.Sprintf(" type(%s) =\"%s\"", name, relation.Type))
 		cypher.needConjunction = true
 	}
 	if relation.ToNodeIsUnique {
-		cypher.tryAddConjunction(conjunction)
+		cypher.tryAddWhereConjunction(conjunction)
 		cypher.WhereCypher.WriteString(fmt.Sprintf(" %s.unique = \"true\"", name))
 		cypher.needConjunction = true
 	}
 	if relation.Id != -1 {
-		cypher.tryAddConjunction(conjunction)
+		cypher.tryAddWhereConjunction(conjunction)
 		cypher.WhereCypher.WriteString(fmt.Sprintf(" id(%s) =%d", name, relation.Id))
 		cypher.needConjunction = true
 	}
 	if len(relation.Properties) > 0 {
 		for k, v := range relation.Properties {
-			cypher.tryAddConjunction(conjunction)
+			cypher.tryAddWhereConjunction(conjunction)
 			cypher.WhereCypher.WriteString(fmt.Sprintf(" %s.%s = \"%s\"", name, k, v))
 			cypher.needConjunction = true
 		}
@@ -84,23 +139,23 @@ func (cypher *CypherStruct) WhereRelation(name string, relation *Relation, conju
 // WhereNode the name is the param of match, like n1,n2(is node),r1,r2(is relationship)
 func (cypher *CypherStruct) WhereNode(name string, node *Node, conjunction string) *CypherStruct {
 	if len(node.Label) > 0 {
-		cypher.tryAddConjunction(conjunction)
+		cypher.tryAddWhereConjunction(conjunction)
 		cypher.WhereCypher.WriteString(fmt.Sprintf(" labels(%s) =[\"%s\"]", name, node.Label))
 		cypher.needConjunction = true
 	}
 	if node.IsUnique {
-		cypher.tryAddConjunction(conjunction)
+		cypher.tryAddWhereConjunction(conjunction)
 		cypher.WhereCypher.WriteString(fmt.Sprintf(" %s.unique = \"true\"", name))
 		cypher.needConjunction = true
 	}
 	if node.Id != -1 {
-		cypher.tryAddConjunction(conjunction)
+		cypher.tryAddWhereConjunction(conjunction)
 		cypher.WhereCypher.WriteString(fmt.Sprintf(" id(%s) =%d", name, node.Id))
 		cypher.needConjunction = true
 	}
 	if len(node.Properties) > 0 {
 		for k, v := range node.Properties {
-			cypher.tryAddConjunction(conjunction)
+			cypher.tryAddWhereConjunction(conjunction)
 			cypher.WhereCypher.WriteString(fmt.Sprintf(" %s.%s = \"%s\"", name, k, v))
 			cypher.needConjunction = true
 		}
