@@ -20,11 +20,6 @@ func (node *Node) Create() (*neo4j.Result, error) {
 	return graph.CreateNode(node.Label, node.Properties, node.IsUnique)
 }
 
-// Modify todo
-func (node *Node) Modify() (*neo4j.Result, error) {
-	return nil, nil
-}
-
 type Relation struct {
 	FromNode       *Node
 	ToNode         *Node
@@ -47,8 +42,8 @@ func NewRelationQuery() *RelationQuery {
 	return &RelationQuery{Relation: *NewRelation()}
 }
 
-// Create todo
+// Create relations
 func (r *Relation) Create() (*neo4j.Result, error) {
-
-	return nil, nil
+	cypher := CypherStruct{}
+	return cypher.CreateRelation(r).ReturnNode().ReturnRelation().Result()
 }
