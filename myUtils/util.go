@@ -1,4 +1,4 @@
-package utils
+package myUtils
 
 func IsEmpty(str string) bool {
 	if &str == nil {

@@ -7,10 +7,10 @@ import (
 
 // Node It is mandatory to have only one label for each point
 type Node struct {
-	Id         int64 `default:"-1"`
-	IsUnique   bool
-	Label      string
-	Properties map[string]string
+	Id         int64             `json:"id" default:"-1"`
+	IsUnique   bool              `json:"is_unique"`
+	Label      string            `json:"label"`
+	Properties map[string]string `json:"properties"`
 }
 
 func NewNode() *Node {
@@ -21,18 +21,18 @@ func (node *Node) Create() (*neo4j.Result, error) {
 }
 
 type Relation struct {
-	FromNode       *Node
-	ToNode         *Node
-	Id             int64 `default:"-1"`
-	ToNodeIsUnique bool
-	Type           string
-	Properties     map[string]string
+	FromNode       *Node             `json:"from_node"`
+	ToNode         *Node             `json:"to_node"`
+	Id             int64             `json:"id" default:"-1"`
+	ToNodeIsUnique bool              `json:"to_node_is_unique"`
+	Type           string            `json:"type"`
+	Properties     map[string]string `json:"properties"`
 }
 type RelationQuery struct {
 	Relation
-	IsDirect bool
-	Min      int
-	Max      int
+	IsDirect bool `json:"is_direct"`
+	Min      int  `json:"min"`
+	Max      int  `json:"max"`
 }
 
 func NewRelation() *Relation {

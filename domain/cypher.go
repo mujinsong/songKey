@@ -1,13 +1,12 @@
 package domain
 
 import (
-	"errors"
 	"fmt"
 	"github.com/neo4j/neo4j-go-driver/neo4j"
 	"log"
 	"reflect"
 	"songKey/dao/graph"
-	"songKey/utils"
+	"songKey/myUtils"
 	"strings"
 	"sync"
 )
@@ -226,7 +225,7 @@ func (cypher *CypherStruct) WhereOr(name string, where interface{}) *CypherStruc
 
 func (cypher *CypherStruct) MatchNode(node *Node) *CypherStruct {
 	isOk := false
-	if node != nil && !utils.IsEmpty(node.Label) {
+	if node != nil && !myUtils.IsEmpty(node.Label) {
 		isOk = cypher.MatchNodeByLabelStr(node.Label)
 	}
 	if !isOk {
@@ -242,7 +241,7 @@ func (cypher *CypherStruct) MatchNode(node *Node) *CypherStruct {
 }
 func (cypher *CypherStruct) CreateNode(node *Node) *CypherStruct {
 	isOk := false
-	if node != nil && !utils.IsEmpty(node.Label) {
+	if node != nil && !myUtils.IsEmpty(node.Label) {
 		isOk = cypher.CreateNodeByLabelStr(node.Label)
 	}
 	if !isOk {
@@ -263,7 +262,7 @@ func (cypher *CypherStruct) MatchNodeByLabelStr(label string) bool {
 			log.Println("match Fail!!!")
 		}
 	}()
-	if !utils.IsEmpty(label) {
+	if !myUtils.IsEmpty(label) {
 		cypher.matchLock.Lock()
 		if cypher.matchNodeCount != 0 {
 			cypher.MatchCypher.WriteByte(',')
@@ -286,7 +285,7 @@ func (cypher *CypherStruct) CreateNodeByLabelStr(label string) bool {
 			log.Println("match Fail!!!")
 		}
 	}()
-	if !utils.IsEmpty(label) {
+	if !myUtils.IsEmpty(label) {
 		cypher.matchLock.Lock()
 		if cypher.createNodeCount != 0 {
 			cypher.createCypher.WriteByte(',')
@@ -314,12 +313,31 @@ func (cypher *CypherStruct) concatRelationMatcher(relation *Relation) *CypherStr
 		cypher.matchRelationCount++
 	}
 	cypher.MatchCypher.WriteString("->")
-	if relation.ToNode != nil && !utils.IsEmpty(relation.ToNode.Label) {
+	if relation.ToNode != nil && !myUtils.IsEmpty(relation.ToNode.Label) {
 		cypher.MatchCypher.WriteString(fmt.Sprintf("(n%d:%s)", cypher.matchNodeCount, relation.ToNode.Label))
 		cypher.matchNodeCount++
 	} else {
 		cypher.MatchCypher.WriteString("()")
 	}
+	return cypher
+}
+func (cypher *CypherStruct) CreateOnlyRelation(relation *Relation, fromNode, toNode string) *CypherStruct {
+	if cypher.createCypher.Len() == 0 {
+		cypher.createCypher.WriteString(" create ")
+	} else {
+		cypher.createCypher.WriteByte(',')
+	}
+	cypher.createCypher.WriteString(fmt.Sprintf("(%s)-[r%d:%s{", fromNode, cypher.createRelationCount, relation.Type))
+	cypher.createRelationCount++
+	for k, pro := range relation.Properties {
+		cypher.createCypher.WriteString(fmt.Sprintf("%s:%v,", k, pro))
+	}
+	if relation.ToNodeIsUnique == true {
+		cypher.createCypher.WriteString("unique:true}")
+	} else {
+		cypher.createCypher.WriteString("unique:false}")
+	}
+	cypher.createCypher.WriteString(fmt.Sprintf("]->(%s) ", toNode))
 	return cypher
 }
 func (cypher *CypherStruct) concatRelationCreate(relation *Relation) *CypherStruct {
@@ -333,7 +351,7 @@ func (cypher *CypherStruct) concatRelationCreate(relation *Relation) *CypherStru
 		cypher.createRelationCount++
 	}
 	cypher.createCypher.WriteString("->")
-	if relation.ToNode != nil && !utils.IsEmpty(relation.ToNode.Label) {
+	if relation.ToNode != nil && !myUtils.IsEmpty(relation.ToNode.Label) {
 		cypher.createCypher.WriteString(fmt.Sprintf("(n%d:%s)", cypher.createNodeCount, relation.ToNode.Label))
 		cypher.createNodeCount++
 	} else {
@@ -436,15 +454,16 @@ func (cypher *CypherStruct) ReturnRelation() *CypherStruct {
 	}
 	return cypher
 }
+func (cypher *CypherStruct) ReturnAll() *CypherStruct {
+	cypher.ReturnCypher.WriteString(" return *")
+	return cypher
+}
 
 func (cypher *CypherStruct) GetFinalCypher() string {
-	return cypher.MatchCypher.String() + " " + cypher.createCypher.String() + " " + cypher.SetCypher.String() + " " + cypher.WhereCypher.String() + " " + cypher.ReturnCypher.String()
+	return cypher.MatchCypher.String() + " " + cypher.SetCypher.String() + " " + cypher.WhereCypher.String() + " " + cypher.createCypher.String() + " " + cypher.ReturnCypher.String()
 }
 
 func (cypher *CypherStruct) Result() (*neo4j.Result, error) {
-	if cypher.createCypher.Len() > 0 && cypher.MatchCypher.Len() > 0 {
-		return nil, errors.New("dont know you wanna create or match")
-	}
 	finalCypher := cypher.GetFinalCypher()
 	res, err := graph.Run(finalCypher)
 	if err != nil {
