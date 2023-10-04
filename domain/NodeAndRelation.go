@@ -5,7 +5,7 @@ import (
 	"songKey/dao/graph"
 )
 
-// Node It is mandatory to have only one label for each point
+// Node It is mandatory to have only one label for each point. if you wanna new node, had better to use domain.NewNode
 type Node struct {
 	Id         int64             `json:"id" default:"-1"`
 	IsUnique   bool              `json:"is_unique"`
@@ -20,6 +20,7 @@ func (node *Node) Create() (*neo4j.Result, error) {
 	return graph.CreateNode(node.Label, node.Properties, node.IsUnique)
 }
 
+// Relation :had better to use domain.NewRelation
 type Relation struct {
 	FromNode       *Node             `json:"from_node"`
 	ToNode         *Node             `json:"to_node"`
@@ -28,6 +29,8 @@ type Relation struct {
 	Type           string            `json:"type"`
 	Properties     map[string]string `json:"properties"`
 }
+
+// RelationQuery :had better to use domain.NewRelationQuery
 type RelationQuery struct {
 	Relation
 	IsDirect bool `json:"is_direct"`

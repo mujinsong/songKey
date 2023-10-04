@@ -8,7 +8,7 @@ import (
 	"songKey/domain"
 )
 
-// CreateRelation todo
+// CreateRelation need a relationship which need has fromNode and toNode.
 func CreateRelation(ctx context.Context, c *app.RequestContext) {
 	relationCreate := domain.NewRelation()
 	err := c.BindJSON(relationCreate)
