@@ -14,7 +14,7 @@ func GlobalErrorHandler(ctx context.Context, c *app.RequestContext) {
 
 	if len(c.Errors) == 0 {
 		// 没有收集到异常直接返回
-		fmt.Println("retun")
+		fmt.Println("return")
 		return
 	}
 	hertzErr := c.Errors[0]

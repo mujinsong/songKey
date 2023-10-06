@@ -23,4 +23,5 @@ func router(r *server.Hertz) {
 		ctx.JSON(consts.StatusOK, utils.H{"message": "pong"})
 	})
 	r.POST("/createRelation", controller.CreateRelation)
+	r.POST("/createNode", controller.CreateNode)
 }

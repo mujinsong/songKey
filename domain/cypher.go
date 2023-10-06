@@ -242,10 +242,10 @@ func (cypher *CypherStruct) MatchNode(node *Node) *CypherStruct {
 func (cypher *CypherStruct) CreateNode(node *Node) *CypherStruct {
 	isOk := false
 	if node != nil && !myUtils.IsEmpty(node.Label) {
-		isOk = cypher.CreateNodeByLabelStr(node.Label)
+		isOk = cypher.CreateNodeByLabelStr(node.Label, node.Properties, node.IsUnique)
 	}
 	if !isOk {
-		log.Println("No match Node!")
+		log.Println("No create Node!")
 		if cypher.createCypher.Len() > 0 {
 			cypher.createCypher.WriteByte(',')
 		} else {
@@ -278,7 +278,7 @@ func (cypher *CypherStruct) MatchNodeByLabelStr(label string) bool {
 		return false
 	}
 }
-func (cypher *CypherStruct) CreateNodeByLabelStr(label string) bool {
+func (cypher *CypherStruct) CreateNodeByLabelStr(label string, properties map[string]string, isUnique bool) bool {
 	defer func() {
 		if p := recover(); p != nil {
 			cypher.matchLock.Unlock()
@@ -292,12 +292,23 @@ func (cypher *CypherStruct) CreateNodeByLabelStr(label string) bool {
 		} else {
 			cypher.createCypher.WriteString("create ")
 		}
-		cypher.createCypher.WriteString(fmt.Sprintf("(n%d:%s)", cypher.createNodeCount, label))
+		cypher.createCypher.WriteString(fmt.Sprintf("(n%d:%s", cypher.createNodeCount, label))
 		cypher.createNodeCount++
+		cypher.createCypher.WriteString("{")
+		if len(properties) > 0 {
+			for k, v := range properties {
+				cypher.createCypher.WriteString(fmt.Sprintf("%s:%s,", k, v))
+			}
+		}
+		if isUnique {
+			cypher.createCypher.WriteString(fmt.Sprintf("unique:true})"))
+		} else {
+			cypher.createCypher.WriteString(fmt.Sprintf("unique:false})"))
+		}
 		cypher.matchLock.Unlock()
 		return true
 	} else {
-		log.Println("Match Fail!")
+		log.Println("create Fail!")
 		return false
 	}
 }
