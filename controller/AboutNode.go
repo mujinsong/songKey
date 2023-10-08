@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/utils"
+	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"log"
 	"songKey/contants"
 	"songKey/domain"
@@ -50,4 +51,26 @@ func CreateNode(ctx context.Context, c *app.RequestContext) {
 		StatusMsg:  "success",
 		Attach:     utils.H{"result": res},
 	})
+}
+
+func SetNode(ctx context.Context, c *app.RequestContext) {
+	node := domain.NewNode()
+	err := c.BindJSON(node)
+	if err != nil {
+		log.Println("SetNode-bind-err:", err)
+		c.JSON(contants.SUCCESS, domain.Response{StatusCode: contants.INVALID_PARAMS, StatusMsg: "传参错误，bind解析失败"})
+		return
+	}
+	if node.Id == -1 {
+		log.Println("SetNode: dont get the id of node because node.Id == -1")
+		c.JSON(contants.SUCCESS, domain.Response{StatusCode: contants.INVALID_PARAMS, StatusMsg: "传参错误，没传id，id为-1"})
+		return
+	}
+	result, err := services.SetNode(node)
+	if err != nil {
+		log.Println("setNode-err:", err)
+		c.JSON(contants.SUCCESS, domain.Response{StatusCode: contants.ERROR, StatusMsg: "setNode失败"})
+		return
+	}
+	c.JSON(consts.StatusOK, domain.Response{StatusCode: contants.SUCCESS, Attach: utils.H{"result": result}})
 }

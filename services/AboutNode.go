@@ -13,3 +13,15 @@ func CreateNode(node *domain.Node) (*neo4j.Result, error) {
 	res, err := cy.Result()
 	return res, err
 }
+
+func SetNode(node *domain.Node) (*neo4j.Result, error) {
+	cy := domain.CypherStruct{}
+	cypher := cy.MatchNode(node).Set("n0", node, []string{"all"}).WhereAnd("n0", node, []string{"id"}).ReturnNode().GetFinalCypher()
+	log.Println("service-SetNode: " + cypher)
+	result, err := cy.Result()
+	if err != nil {
+		log.Println("service-setNode-err:", err)
+		return nil, err
+	}
+	return result, err
+}

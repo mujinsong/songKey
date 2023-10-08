@@ -8,7 +8,7 @@ import (
 // Node It is mandatory to have only one label for each point. if you wanna new node, had better to use domain.NewNode
 type Node struct {
 	Id         int64             `json:"id" default:"-1"`
-	IsUnique   bool              `json:"is_unique"`
+	IsUnique   bool              `json:"unique"`
 	Label      string            `json:"label"`
 	Properties map[string]string `json:"properties"`
 }
