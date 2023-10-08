@@ -49,7 +49,7 @@ func CreateNode(ctx context.Context, c *app.RequestContext) {
 	c.JSON(contants.SUCCESS, domain.Response{
 		StatusCode: 0,
 		StatusMsg:  "success",
-		Attach:     utils.H{"result": res},
+		Attach:     utils.H{"result": domain.NeoResToResult(res)},
 	})
 }
 
@@ -72,5 +72,5 @@ func SetNode(ctx context.Context, c *app.RequestContext) {
 		c.JSON(contants.SUCCESS, domain.Response{StatusCode: contants.ERROR, StatusMsg: "setNode失败"})
 		return
 	}
-	c.JSON(consts.StatusOK, domain.Response{StatusCode: contants.SUCCESS, Attach: utils.H{"result": result}})
+	c.JSON(consts.StatusOK, domain.Response{StatusCode: contants.SUCCESS, Attach: utils.H{"result": domain.NeoResToResult(result)}})
 }
