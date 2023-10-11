@@ -34,17 +34,18 @@ type Relation struct {
 
 // RelationQuery :had better to use domain.NewRelationQuery
 type RelationQuery struct {
-	Relation
-	IsDirect bool `json:"is_direct"`
-	Min      int  `json:"min"`
-	Max      int  `json:"max"`
+	FromNode *Node `json:"from_node"`
+	ToNode   *Node `json:"to_node"`
+	IsDirect bool  `json:"is_direct" default:"true"`
+	Min      int   `json:"min"`
+	Max      int   `json:"max"`
 }
 
 func NewRelation() *Relation {
 	return &Relation{Id: -1}
 }
 func NewRelationQuery() *RelationQuery {
-	return &RelationQuery{Relation: *NewRelation()}
+	return &RelationQuery{FromNode: NewNode(), ToNode: NewNode(), IsDirect: true}
 }
 
 // Create relations
