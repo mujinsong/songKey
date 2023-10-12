@@ -25,4 +25,5 @@ func router(r *server.Hertz) {
 	r.POST("/createRelation", controller.CreateRelation)
 	r.POST("/createNode", controller.CreateNode)
 	r.POST("/setNode", controller.SetNode)
+	r.POST("/queryPath", controller.QueryPath)
 }

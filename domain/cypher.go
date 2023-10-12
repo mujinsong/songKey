@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/neo4j/neo4j-go-driver/neo4j"
 	"log"
-	"reflect"
 	"songKey/dao/graph"
 	"songKey/myUtils"
 	"strings"
@@ -79,23 +78,22 @@ func (cypher *CypherStruct) SetRelation(name string, relation *Relation) *Cypher
 
 // Set the `set` is a node or a relation, the `name` is the param of match, like n1,n2(is node),r1,r2(is relationship)
 func (cypher *CypherStruct) Set(name string, set interface{}, element []string) *CypherStruct {
-	theType := reflect.TypeOf(set)
 	mp := make(map[string]bool)
 	for _, v := range element {
 		mp[v] = true
 	}
-	switch theType {
-	case reflect.TypeOf(&Relation{}):
+	switch set.(type) {
+	case *Relation:
 		cypher.SetRelation(name, (set).(*Relation))
 		log.Println("SetRelation")
-	case reflect.TypeOf(Relation{}):
+	case Relation:
 		relation := (set).(Relation)
 		cypher.SetRelation(name, &relation)
 		log.Println("SetRelation")
-	case reflect.TypeOf(&Node{}):
+	case *Node:
 		cypher.SetNode(name, (set).(*Node), mp)
 		log.Println("SetNode")
-	case reflect.TypeOf(Node{}):
+	case Node:
 		node := set.(Node)
 		cypher.SetNode(name, &node, mp)
 		log.Println("SetNode")
@@ -189,23 +187,22 @@ func (cypher *CypherStruct) WhereNode(name string, node *Node, conjunction strin
 // WhereAnd :the name is the param of match, like n1,n2(is node),r1,r2(is relationship)
 func (cypher *CypherStruct) WhereAnd(name string, where interface{}, element []string) *CypherStruct {
 	conjunction := " and "
-	theType := reflect.TypeOf(where)
 	mp := make(map[string]bool)
 	for _, v := range element {
 		mp[v] = true
 	}
-	switch theType {
-	case reflect.TypeOf(&Relation{}):
+	switch where.(type) {
+	case *Relation:
 		cypher.WhereRelation(name, (where).(*Relation), conjunction, mp)
 		log.Println("whereAndRelation")
-	case reflect.TypeOf(Relation{}):
+	case Relation:
 		relation := (where).(Relation)
 		cypher.WhereRelation(name, &relation, conjunction, mp)
 		log.Println("whereAndRelation")
-	case reflect.TypeOf(&Node{}):
+	case *Node:
 		cypher.WhereNode(name, (where).(*Node), conjunction, mp)
 		log.Println("whereAndNode")
-	case reflect.TypeOf(Node{}):
+	case Node:
 		node := where.(Node)
 		cypher.WhereNode(name, &node, conjunction, mp)
 		log.Println("whereAndNode")
@@ -219,23 +216,22 @@ func (cypher *CypherStruct) WhereAnd(name string, where interface{}, element []s
 // WhereOr :the name is the param of match, like n1,n2(is node),r1,r2(is relationship)
 func (cypher *CypherStruct) WhereOr(name string, where interface{}, element []string) *CypherStruct {
 	conjunction := " or "
-	theType := reflect.TypeOf(where)
 	mp := make(map[string]bool)
 	for _, v := range element {
 		mp[v] = true
 	}
-	switch theType {
-	case reflect.TypeOf(&Relation{}):
+	switch where.(type) {
+	case *Relation:
 		cypher.WhereRelation(name, (where).(*Relation), conjunction, mp)
 		log.Println("whereOrRelation")
-	case reflect.TypeOf(Relation{}):
+	case Relation:
 		relation := (where).(Relation)
 		cypher.WhereRelation(name, &relation, conjunction, mp)
 		log.Println("whereOrRelation")
-	case reflect.TypeOf(&Node{}):
+	case *Node:
 		cypher.WhereNode(name, (where).(*Node), conjunction, mp)
 		log.Println("whereOrNode")
-	case reflect.TypeOf(Node{}):
+	case Node:
 		node := where.(Node)
 		cypher.WhereNode(name, &node, conjunction, mp)
 		log.Println("whereOrNode")
@@ -397,9 +393,9 @@ func (cypher *CypherStruct) concatRelationQuery(relation *RelationQuery) *Cypher
 	cypher.MatchNode(relation.FromNode)
 	cypher.MatchCypher.WriteByte('-')
 	if relation.IsDirect {
-		cypher.MatchCypher.WriteString("[]->")
+		cypher.MatchCypher.WriteString("[r0]->")
 	} else {
-		cypher.MatchCypher.WriteString("[*")
+		cypher.MatchCypher.WriteString("[r0*")
 		if relation.Min > 0 && relation.Max <= 0 {
 			cypher.MatchCypher.WriteString(fmt.Sprintf("%d..", relation.Min))
 		} else if relation.Min <= 0 && relation.Max > 0 {
@@ -409,25 +405,25 @@ func (cypher *CypherStruct) concatRelationQuery(relation *RelationQuery) *Cypher
 		}
 		cypher.MatchCypher.WriteString("]->")
 	}
+	cypher.matchRelationCount++
 	cypher.MatchCypher.WriteString(fmt.Sprintf("(n%d:%s)", cypher.matchNodeCount, relation.ToNode.Label))
 	cypher.matchNodeCount++
 	return cypher
 }
 
 func (cypher *CypherStruct) MatchRelation(relation interface{}) *CypherStruct {
-	theType := reflect.TypeOf(relation)
-	switch theType {
-	case reflect.TypeOf(&Relation{}):
+	switch relation.(type) {
+	case *Relation:
 		log.Println("isMatcher")
 		cypher.concatRelationMatcher(relation.(*Relation))
-	case reflect.TypeOf(Relation{}):
+	case Relation:
 		log.Println("isMatcher")
 		temp := relation.(Relation)
 		cypher.concatRelationMatcher(&temp)
-	case reflect.TypeOf(&RelationQuery{}):
+	case *RelationQuery:
 		log.Println("isQuery")
 		cypher.concatRelationQuery(relation.(*RelationQuery))
-	case reflect.TypeOf(RelationQuery{}):
+	case RelationQuery:
 		log.Println("isQuery")
 		temp := relation.(RelationQuery)
 		cypher.concatRelationQuery(&temp)
