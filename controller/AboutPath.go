@@ -28,6 +28,6 @@ func QueryPath(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
-	c.JSON(consts.StatusOK, domain.Response{StatusCode: contants.SUCCESS, Attach: utils.H{"result": domain.NeoResToResult(result)}})
+	c.JSON(consts.StatusOK, domain.Response{StatusCode: contants.SUCCESS, Attach: utils.H{"result": result}})
 	return
 }

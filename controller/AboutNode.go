@@ -49,7 +49,7 @@ func CreateNode(ctx context.Context, c *app.RequestContext) {
 	c.JSON(contants.SUCCESS, domain.Response{
 		StatusCode: 0,
 		StatusMsg:  "success",
-		Attach:     utils.H{"result": domain.NeoResToResult(res)},
+		Attach:     utils.H{"result": res},
 	})
 }
 
@@ -72,5 +72,21 @@ func SetNode(ctx context.Context, c *app.RequestContext) {
 		c.JSON(contants.SUCCESS, domain.Response{StatusCode: contants.ERROR, StatusMsg: "setNode失败"})
 		return
 	}
-	c.JSON(consts.StatusOK, domain.Response{StatusCode: contants.SUCCESS, Attach: utils.H{"result": domain.NeoResToResult(result)}})
+	c.JSON(consts.StatusOK, domain.Response{StatusCode: contants.SUCCESS, Attach: utils.H{"result": result}})
+}
+func MatchNode(ctx context.Context, c *app.RequestContext) {
+	node := domain.NewNode()
+	err := c.BindJSON(node)
+	if err != nil {
+		log.Println("MatchNode-bind-err:", err)
+		c.JSON(contants.SUCCESS, domain.Response{StatusCode: contants.INVALID_PARAMS, StatusMsg: "传参错误，bind解析失败"})
+		return
+	}
+	result, err := services.MatchNode(node)
+	if err != nil {
+		log.Println("setNode-err:", err)
+		c.JSON(contants.SUCCESS, domain.Response{StatusCode: contants.ERROR, StatusMsg: "setNode失败"})
+		return
+	}
+	c.JSON(consts.StatusOK, domain.Response{StatusCode: contants.SUCCESS, Attach: utils.H{"result": result}})
 }

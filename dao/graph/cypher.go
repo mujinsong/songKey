@@ -1,10 +1,9 @@
-package domain
+package graph
 
 import (
 	"fmt"
-	"github.com/neo4j/neo4j-go-driver/neo4j"
 	"log"
-	"songKey/dao/graph"
+	"songKey/domain"
 	"songKey/myUtils"
 	"strings"
 	"sync"
@@ -40,7 +39,7 @@ func (cypher *CypherStruct) Reset() {
 	cypher.ReturnCypher.Reset()
 }
 
-func (cypher *CypherStruct) SetNode(name string, node *Node, mp map[string]bool) *CypherStruct {
+func (cypher *CypherStruct) SetNode(name string, node *domain.Node, mp map[string]bool) *CypherStruct {
 	conjunction := ","
 	if mp["unique"] || mp["all"] {
 		if node.IsUnique {
@@ -61,7 +60,7 @@ func (cypher *CypherStruct) SetNode(name string, node *Node, mp map[string]bool)
 	}
 	return cypher
 }
-func (cypher *CypherStruct) SetRelation(name string, relation *Relation) *CypherStruct {
+func (cypher *CypherStruct) SetRelation(name string, relation *domain.Relation) *CypherStruct {
 	conjunction := ","
 	if relation.ToNode.IsUnique || relation.ToNodeIsUnique {
 		cypher.tryAddSetConjunction(conjunction)
@@ -83,18 +82,18 @@ func (cypher *CypherStruct) Set(name string, set interface{}, element []string) 
 		mp[v] = true
 	}
 	switch set.(type) {
-	case *Relation:
-		cypher.SetRelation(name, (set).(*Relation))
+	case *domain.Relation:
+		cypher.SetRelation(name, (set).(*domain.Relation))
 		log.Println("SetRelation")
-	case Relation:
-		relation := (set).(Relation)
+	case domain.Relation:
+		relation := (set).(domain.Relation)
 		cypher.SetRelation(name, &relation)
 		log.Println("SetRelation")
-	case *Node:
-		cypher.SetNode(name, (set).(*Node), mp)
+	case *domain.Node:
+		cypher.SetNode(name, (set).(*domain.Node), mp)
 		log.Println("SetNode")
-	case Node:
-		node := set.(Node)
+	case domain.Node:
+		node := set.(domain.Node)
 		cypher.SetNode(name, &node, mp)
 		log.Println("SetNode")
 	default:
@@ -127,7 +126,7 @@ func (cypher *CypherStruct) tryAddSetConjunction(conjunction string) {
 }
 
 // WhereRelation the name is the param of match, like n1,n2(is node),r1,r2(is relationship)
-func (cypher *CypherStruct) WhereRelation(name string, relation *Relation, conjunction string, mp map[string]bool) *CypherStruct {
+func (cypher *CypherStruct) WhereRelation(name string, relation *domain.Relation, conjunction string, mp map[string]bool) *CypherStruct {
 	if len(relation.Type) > 0 {
 		cypher.tryAddWhereConjunction(conjunction)
 		cypher.WhereCypher.WriteString(fmt.Sprintf(" type(%s) =\"%s\"", name, relation.Type))
@@ -156,7 +155,7 @@ func (cypher *CypherStruct) WhereRelation(name string, relation *Relation, conju
 }
 
 // WhereNode the name is the param of match, like n1,n2(is node),r1,r2(is relationship)
-func (cypher *CypherStruct) WhereNode(name string, node *Node, conjunction string, element map[string]bool) *CypherStruct {
+func (cypher *CypherStruct) WhereNode(name string, node *domain.Node, conjunction string, element map[string]bool) *CypherStruct {
 	if len(node.Label) > 0 {
 		cypher.tryAddWhereConjunction(conjunction)
 		cypher.WhereCypher.WriteString(fmt.Sprintf(" labels(%s) =[\"%s\"]", name, node.Label))
@@ -192,18 +191,18 @@ func (cypher *CypherStruct) WhereAnd(name string, where interface{}, element []s
 		mp[v] = true
 	}
 	switch where.(type) {
-	case *Relation:
-		cypher.WhereRelation(name, (where).(*Relation), conjunction, mp)
+	case *domain.Relation:
+		cypher.WhereRelation(name, (where).(*domain.Relation), conjunction, mp)
 		log.Println("whereAndRelation")
-	case Relation:
-		relation := (where).(Relation)
+	case domain.Relation:
+		relation := (where).(domain.Relation)
 		cypher.WhereRelation(name, &relation, conjunction, mp)
 		log.Println("whereAndRelation")
-	case *Node:
-		cypher.WhereNode(name, (where).(*Node), conjunction, mp)
+	case *domain.Node:
+		cypher.WhereNode(name, (where).(*domain.Node), conjunction, mp)
 		log.Println("whereAndNode")
-	case Node:
-		node := where.(Node)
+	case domain.Node:
+		node := where.(domain.Node)
 		cypher.WhereNode(name, &node, conjunction, mp)
 		log.Println("whereAndNode")
 
@@ -221,18 +220,18 @@ func (cypher *CypherStruct) WhereOr(name string, where interface{}, element []st
 		mp[v] = true
 	}
 	switch where.(type) {
-	case *Relation:
-		cypher.WhereRelation(name, (where).(*Relation), conjunction, mp)
+	case *domain.Relation:
+		cypher.WhereRelation(name, (where).(*domain.Relation), conjunction, mp)
 		log.Println("whereOrRelation")
-	case Relation:
-		relation := (where).(Relation)
+	case domain.Relation:
+		relation := (where).(domain.Relation)
 		cypher.WhereRelation(name, &relation, conjunction, mp)
 		log.Println("whereOrRelation")
-	case *Node:
-		cypher.WhereNode(name, (where).(*Node), conjunction, mp)
+	case *domain.Node:
+		cypher.WhereNode(name, (where).(*domain.Node), conjunction, mp)
 		log.Println("whereOrNode")
-	case Node:
-		node := where.(Node)
+	case domain.Node:
+		node := where.(domain.Node)
 		cypher.WhereNode(name, &node, conjunction, mp)
 		log.Println("whereOrNode")
 
@@ -242,7 +241,7 @@ func (cypher *CypherStruct) WhereOr(name string, where interface{}, element []st
 	return cypher
 }
 
-func (cypher *CypherStruct) MatchNode(node *Node) *CypherStruct {
+func (cypher *CypherStruct) MatchNode(node *domain.Node) *CypherStruct {
 	isOk := false
 	if node != nil && !myUtils.IsEmpty(node.Label) {
 		isOk = cypher.MatchNodeByLabelStr(node.Label)
@@ -258,7 +257,7 @@ func (cypher *CypherStruct) MatchNode(node *Node) *CypherStruct {
 	}
 	return cypher
 }
-func (cypher *CypherStruct) CreateNode(node *Node) *CypherStruct {
+func (cypher *CypherStruct) CreateNode(node *domain.Node) *CypherStruct {
 	isOk := false
 	if node != nil && !myUtils.IsEmpty(node.Label) {
 		isOk = cypher.CreateNodeByLabelStr(node.Label, node.Properties, node.IsUnique)
@@ -332,7 +331,7 @@ func (cypher *CypherStruct) CreateNodeByLabelStr(label string, properties map[st
 	}
 }
 
-func (cypher *CypherStruct) concatRelationMatcher(relation *Relation) *CypherStruct {
+func (cypher *CypherStruct) concatRelationMatcher(relation *domain.Relation) *CypherStruct {
 	cypher.MatchNode(relation.FromNode)
 	cypher.MatchCypher.WriteByte('-')
 	if relation.Type != "" {
@@ -351,7 +350,7 @@ func (cypher *CypherStruct) concatRelationMatcher(relation *Relation) *CypherStr
 	}
 	return cypher
 }
-func (cypher *CypherStruct) CreateOnlyRelation(relation *Relation, fromNode, toNode string) *CypherStruct {
+func (cypher *CypherStruct) CreateOnlyRelation(relation *domain.Relation, fromNode, toNode string) *CypherStruct {
 	if cypher.createCypher.Len() == 0 {
 		cypher.createCypher.WriteString(" create ")
 	} else {
@@ -370,7 +369,7 @@ func (cypher *CypherStruct) CreateOnlyRelation(relation *Relation, fromNode, toN
 	cypher.createCypher.WriteString(fmt.Sprintf("]->(%s) ", toNode))
 	return cypher
 }
-func (cypher *CypherStruct) concatRelationCreate(relation *Relation) *CypherStruct {
+func (cypher *CypherStruct) concatRelationCreate(relation *domain.Relation) *CypherStruct {
 	cypher.CreateNode(relation.FromNode)
 	cypher.createCypher.WriteByte('-')
 	if relation.Type != "" {
@@ -389,7 +388,7 @@ func (cypher *CypherStruct) concatRelationCreate(relation *Relation) *CypherStru
 	}
 	return cypher
 }
-func (cypher *CypherStruct) concatRelationQuery(relation *RelationQuery) *CypherStruct {
+func (cypher *CypherStruct) concatRelationQuery(relation *domain.RelationQuery) *CypherStruct {
 	cypher.MatchNode(relation.FromNode)
 	cypher.MatchCypher.WriteByte('-')
 	if relation.IsDirect {
@@ -413,26 +412,26 @@ func (cypher *CypherStruct) concatRelationQuery(relation *RelationQuery) *Cypher
 
 func (cypher *CypherStruct) MatchRelation(relation interface{}) *CypherStruct {
 	switch relation.(type) {
-	case *Relation:
+	case *domain.Relation:
 		log.Println("isMatcher")
-		cypher.concatRelationMatcher(relation.(*Relation))
-	case Relation:
+		cypher.concatRelationMatcher(relation.(*domain.Relation))
+	case domain.Relation:
 		log.Println("isMatcher")
-		temp := relation.(Relation)
+		temp := relation.(domain.Relation)
 		cypher.concatRelationMatcher(&temp)
-	case *RelationQuery:
+	case *domain.RelationQuery:
 		log.Println("isQuery")
-		cypher.concatRelationQuery(relation.(*RelationQuery))
-	case RelationQuery:
+		cypher.concatRelationQuery(relation.(*domain.RelationQuery))
+	case domain.RelationQuery:
 		log.Println("isQuery")
-		temp := relation.(RelationQuery)
+		temp := relation.(domain.RelationQuery)
 		cypher.concatRelationQuery(&temp)
 	default:
 		log.Println("MatchRelation: unKnow Type")
 	}
 	return cypher
 }
-func (cypher *CypherStruct) CreateRelation(relation *Relation) *CypherStruct {
+func (cypher *CypherStruct) CreateRelation(relation *domain.Relation) *CypherStruct {
 	cypher.concatRelationCreate(relation)
 	return cypher
 }
@@ -493,9 +492,9 @@ func (cypher *CypherStruct) GetFinalCypher() string {
 	return cypher.MatchCypher.String() + " " + cypher.WhereCypher.String() + " " + cypher.SetCypher.String() + " " + cypher.createCypher.String() + " " + cypher.ReturnCypher.String()
 }
 
-func (cypher *CypherStruct) Result() (*neo4j.Result, error) {
+func (cypher *CypherStruct) Result() (*domain.Result, error) {
 	finalCypher := cypher.GetFinalCypher()
-	res, err := graph.Run(finalCypher)
+	res, err := Run(finalCypher)
 	if err != nil {
 		log.Println("error getResult")
 		return nil, err

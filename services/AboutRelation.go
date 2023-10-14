@@ -1,13 +1,13 @@
 package services
 
 import (
-	"github.com/neo4j/neo4j-go-driver/neo4j"
 	"log"
+	"songKey/dao/graph"
 	"songKey/domain"
 )
 
-func CreateRelation(relationCreate *domain.Relation) (*neo4j.Result, error) {
-	cy := domain.CypherStruct{}
+func CreateRelation(relationCreate *domain.Relation) (*domain.Result, error) {
+	cy := graph.CypherStruct{}
 	cypher := cy.MatchNode(relationCreate.FromNode).MatchNode(relationCreate.ToNode).
 		WhereAnd("n0", relationCreate.FromNode, []string{"id"}).WhereAnd("n1", relationCreate.ToNode, []string{"id"}).
 		CreateOnlyRelation(relationCreate, "n0", "n1").

@@ -27,6 +27,6 @@ func CreateRelation(ctx context.Context, c *app.RequestContext) {
 	c.JSON(contants.SUCCESS, domain.Response{
 		StatusCode: 0,
 		StatusMsg:  "success",
-		Attach:     utils.H{"result": domain.NeoResToResult(res)},
+		Attach:     utils.H{"result": res},
 	})
 }
