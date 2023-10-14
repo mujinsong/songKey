@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// QueryPath todo: handle the problem from issue
+// QueryPath :query must have startNode and EndNode,FromNode and ToNode are irrelevant
 func QueryPath(query *domain.RelationQuery) (*domain.Result, error) {
 	startNode := strings.Builder{}
 	endNode := strings.Builder{}
