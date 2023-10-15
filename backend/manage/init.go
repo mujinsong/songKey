@@ -10,7 +10,7 @@ import (
 
 func InitGlobalMap() error {
 	global.KVMap = make(map[string]interface{})
-	byteValue, err := os.ReadFile("resource/CypherMap.json")
+	byteValue, err := os.ReadFile("backend/resource/CypherMap.json")
 	if err != nil {
 		fmt.Println(err)
 	}

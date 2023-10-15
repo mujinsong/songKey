@@ -1,0 +1,5 @@
+{
+  "cypher": {
+    "QueryPath": "backend/resource/QueryPath.cypher"
+  }
+}

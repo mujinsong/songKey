@@ -3,12 +3,12 @@ package graph
 import (
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"log"
-	"songKey/global"
+	global2 "songKey/global"
 )
 
 func ConnectNeo4j() error {
 	var err error = nil
-	global.Neo4jDriver, err = CreateDriver(global.Neo4jUri, global.Neo4jUsername, global.Neo4jPassword)
+	global2.Neo4jDriver, err = CreateDriver(global2.Neo4jUri, global2.Neo4jUsername, global2.Neo4jPassword)
 	if err != nil {
 		log.Println("neo4j: init fail")
 	}
