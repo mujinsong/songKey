@@ -92,21 +92,38 @@ func NeoResToResult(res *neo4j.ResultWithContext, unique bool) *domain.Result {
 	for (*res).NextRecord(ctx, &record) {
 		for _, key := range keys {
 			if values, ok := record.Get(key); ok {
-				for _, value := range values.([]interface{}) {
-					switch value.(type) {
-					case neo4j.Node:
-						node := value.(neo4j.Node)
-						addNode(uniqueNodeMp, &node, &result)
-					case neo4j.Relationship:
-						relation := value.(neo4j.Relationship)
-						addRelationship(uniquePathMp, &relation, &result)
-					case neo4j.Path:
-						path := value.(neo4j.Path)
-						for _, nd := range path.Nodes {
-							addNode(uniqueNodeMp, &nd, &result)
-						}
-						for _, pt := range path.Relationships {
-							addRelationship(uniqueNodeMp, &pt, &result)
+				switch values.(type) {
+				case neo4j.Node:
+					node := values.(neo4j.Node)
+					addNode(uniqueNodeMp, &node, &result)
+				case neo4j.Relationship:
+					relation := values.(neo4j.Relationship)
+					addRelationship(uniquePathMp, &relation, &result)
+				case neo4j.Path:
+					path := values.(neo4j.Path)
+					for _, nd := range path.Nodes {
+						addNode(uniqueNodeMp, &nd, &result)
+					}
+					for _, pt := range path.Relationships {
+						addRelationship(uniqueNodeMp, &pt, &result)
+					}
+				case []interface{}:
+					for _, value := range values.([]interface{}) {
+						switch value.(type) {
+						case neo4j.Node:
+							node := value.(neo4j.Node)
+							addNode(uniqueNodeMp, &node, &result)
+						case neo4j.Relationship:
+							relation := value.(neo4j.Relationship)
+							addRelationship(uniquePathMp, &relation, &result)
+						case neo4j.Path:
+							path := value.(neo4j.Path)
+							for _, nd := range path.Nodes {
+								addNode(uniqueNodeMp, &nd, &result)
+							}
+							for _, pt := range path.Relationships {
+								addRelationship(uniqueNodeMp, &pt, &result)
+							}
 						}
 					}
 				}
