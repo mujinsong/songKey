@@ -6,7 +6,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/common/utils"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
-	controller2 "songKey/controller"
+	"songKey/controller"
 	"songKey/myUtils"
 )
 
@@ -22,9 +22,11 @@ func router(r *server.Hertz) {
 	r.GET("/ping", func(c context.Context, ctx *app.RequestContext) {
 		ctx.JSON(consts.StatusOK, utils.H{"message": "pong"})
 	})
-	r.POST("/createRelation", controller2.CreateRelation)
-	r.POST("/createNode", controller2.CreateNode)
-	r.POST("/setNode", controller2.SetNode)
-	r.POST("/queryPath", controller2.QueryPath)
-	r.POST("/matchNode", controller2.MatchNode)
+	r.POST("/createRelation", controller.CreateRelation)
+	r.POST("/createNode", controller.CreateNode)
+	r.POST("/setNode", controller.SetNode)
+	r.POST("/queryPath", controller.QueryPath)
+	r.POST("/matchNode", controller.MatchNode)
+	r.GET("/getTableMessage", controller.GetTableMes)
+	r.POST("/getFieldMessage", controller.GetFieldMes)
 }
