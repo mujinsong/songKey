@@ -29,4 +29,5 @@ func router(r *server.Hertz) {
 	r.POST("/matchNode", controller.MatchNode)
 	r.GET("/getTableMessage", controller.GetTableMes)
 	r.POST("/getFieldMessage", controller.GetFieldMes)
+	r.GET("/ChangeRdsDb", controller.ChangeRdsDb)
 }

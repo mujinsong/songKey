@@ -9,6 +9,7 @@ import (
 	"songKey/contants"
 	"songKey/dao/rds"
 	"songKey/domain"
+	"songKey/global"
 	"songKey/services"
 )
 
@@ -35,4 +36,27 @@ func GetFieldMes(ctx context.Context, c *app.RequestContext) {
 		StatusMsg:  "done",
 		Attach:     utils.H{"result": result},
 	})
+}
+
+func ChangeRdsDb(ctx context.Context, c *app.RequestContext) {
+	name := c.Query("dbName")
+	if name == "" {
+		log.Println("get param error")
+		c.JSON(consts.StatusOK, domain.Response{StatusCode: contants.ERROR, StatusMsg: "dbName is nil"})
+		return
+	}
+	log.Println("Now DB is", global.RdsDbName, "wanna change to", name)
+	db, err := rds.ChangeDb(name)
+	if err != nil {
+		log.Println("change dbName error")
+		c.JSON(consts.StatusOK, domain.Response{StatusCode: contants.ERROR, StatusMsg: "传参错误"})
+		return
+	}
+	if !db {
+		log.Println("change dbName fail")
+		c.JSON(consts.StatusOK, domain.Response{StatusCode: contants.ERROR, StatusMsg: "fail"})
+		return
+	}
+	log.Println("changed DB to", global.RdsDbName)
+	c.JSON(consts.StatusOK, domain.Response{StatusCode: contants.SUCCESS, StatusMsg: "ok", Attach: utils.H{"result": global.RdsDbName}})
 }
