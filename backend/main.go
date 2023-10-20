@@ -45,5 +45,5 @@ func main() {
 			recover()
 		}
 	}(global.Neo4jDriver, context.Background())
-	test()
+	StartRouter()
 }
