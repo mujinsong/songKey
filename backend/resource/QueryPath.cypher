@@ -7,7 +7,7 @@ unwind nds1 as ndTemp
 unwind pts1 as ptTemp
 unwind path as phTemp
 with apoc.coll.toSet(collect(ptTemp)) as pts,apoc.coll.toSet(collect(ndTemp)) as nds,st,ed,collect(phTemp) as ph
-with [n in nds where size([pt in pts where endNode(pt)=n])>=n.du]+st as filterNd,nds,ph
+with [n in nds where size([pt in pts where endNode(pt)=n])>=n.degree]+st as filterNd,nds,ph
 with [p in ph where ALL(n in nodes(p) where n in filterNd)] as ans
 unwind ans as ansTemp
 with nodes(ansTemp) as nds,relationships(ansTemp) as pts
