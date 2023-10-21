@@ -23,7 +23,10 @@ type CypherStruct struct {
 
 	WhereCypher     strings.Builder
 	needConjunction bool
-	ReturnCypher    strings.Builder
+
+	deleteCypher strings.Builder
+
+	ReturnCypher strings.Builder
 }
 
 func (cypher *CypherStruct) Reset() {
@@ -38,7 +41,13 @@ func (cypher *CypherStruct) Reset() {
 	cypher.WhereCypher.Reset()
 	cypher.ReturnCypher.Reset()
 }
-
+func (cypher *CypherStruct) Delete(what string) *CypherStruct {
+	if cypher.deleteCypher.Len() == 0 {
+		cypher.deleteCypher.WriteString(" delete ")
+	}
+	cypher.deleteCypher.WriteString(what)
+	return cypher
+}
 func (cypher *CypherStruct) SetNode(name string, node *domain.Node, mp map[string]bool) *CypherStruct {
 	conjunction := ","
 	if mp["unique"] || mp["all"] {
@@ -489,7 +498,7 @@ func (cypher *CypherStruct) ReturnAll() *CypherStruct {
 }
 
 func (cypher *CypherStruct) GetFinalCypher() string {
-	return cypher.MatchCypher.String() + " " + cypher.WhereCypher.String() + " " + cypher.SetCypher.String() + " " + cypher.createCypher.String() + " " + cypher.ReturnCypher.String()
+	return cypher.MatchCypher.String() + " " + cypher.WhereCypher.String() + " " + cypher.SetCypher.String() + " " + cypher.createCypher.String() + " " + cypher.deleteCypher.String() + " " + cypher.ReturnCypher.String()
 }
 
 func (cypher *CypherStruct) Result() (*domain.Result, error) {
