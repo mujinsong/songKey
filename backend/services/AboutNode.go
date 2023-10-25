@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"log"
 	"songKey/dao/graph"
 	"songKey/domain"
@@ -32,6 +33,21 @@ func MatchNode(node *domain.Node) (*domain.Result, error) {
 	result, err := cy.Result()
 	if err != nil {
 		log.Println("service-MatchNode-err:", err)
+		return nil, err
+	}
+	return result, err
+}
+
+func DeleteNode(nodes []*domain.Node) (*domain.Result, error) {
+	cy := graph.CypherStruct{}
+	for i, node := range nodes {
+		cy.MatchNode(node).WhereAnd(fmt.Sprintf("n%d", i), node, []string{"all"}).Delete(fmt.Sprintf("n%d", i))
+	}
+	cypher := cy.ReturnAll().GetFinalCypher()
+	log.Println("service-MatchNode: " + cypher)
+	result, err := cy.Result()
+	if err != nil {
+		log.Println("service-DeleteNodes-err:", err)
 		return nil, err
 	}
 	return result, err

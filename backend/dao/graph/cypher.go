@@ -44,6 +44,8 @@ func (cypher *CypherStruct) Reset() {
 func (cypher *CypherStruct) Delete(what string) *CypherStruct {
 	if cypher.deleteCypher.Len() == 0 {
 		cypher.deleteCypher.WriteString(" delete ")
+	} else {
+		cypher.deleteCypher.WriteByte(',')
 	}
 	cypher.deleteCypher.WriteString(what)
 	return cypher

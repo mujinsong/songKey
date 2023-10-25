@@ -141,7 +141,10 @@ func addNode(uniqueNodeMp map[int64]bool, node *neo4j.Node, result *domain.Resul
 			uniqueNodeMp[node.Id] = true
 		}
 	}
-	nd := domain.Node{Id: node.Id, Label: node.Labels[0], Properties: make(map[string]string)}
+	nd := domain.Node{Id: node.Id, Label: "", Properties: make(map[string]string)}
+	if len(node.Labels) > 0 {
+		nd.Label = node.Labels[0]
+	}
 	for k, v := range node.Props {
 		nd.Properties[k] = fmt.Sprintf("%v", v)
 	}

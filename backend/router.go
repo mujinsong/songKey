@@ -24,10 +24,11 @@ func router(r *server.Hertz) {
 	})
 	r.POST("/createRelation", controller.CreateRelation)
 	r.POST("/createNode", controller.CreateNode)
-	r.POST("/setNode", controller.SetNode)
+	r.POST("/setNode", controller.SetNodes)
 	r.POST("/queryPath", controller.QueryPath)
 	r.POST("/matchNode", controller.MatchNode)
 	r.GET("/getTableMessage", controller.GetTableMes)
 	r.POST("/getFieldMessage", controller.GetFieldMes)
 	r.GET("/ChangeRdsDb", controller.ChangeRdsDb)
+	r.POST("/deleteNodes", controller.DeleteNodes)
 }
